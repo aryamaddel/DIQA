@@ -155,21 +155,32 @@
 			- Mittal, A., Moorthy, A. K., & Bovik, A. C. (2012). "No-Reference Image Quality Assessment in the Spatial Domain." *IEEE Transactions on Image Processing, 21*(12), 4695-4708
 			- DOI: 10.1109/TIP.2012.2214050
 			- Contribution: A quintessential NSS-based model that extracts features from the spatial domain, making it computationally efficient. It models the distribution of locally normalized pixel intensities
+			-https://ieeexplore.ieee.org/abstract/document/6272356
+
 		- NIQE
 		  collapsed:: true
 			- Mittal, A., Soundararajan, R., & Bovik, A. C. (2013). "Making a 'Completely Blind' Image Quality Analyzer." *IEEE Signal Processing Letters, 20*(3), 209-212
 			- DOI: 10.1109/LSP.2012.2227726
 			- Contribution: An influential "opinion-unaware" model that doesn't require subjective scores for training. It builds a "quality-aware" NSS model from a corpus of high-quality images
+			-https://ieeexplore.ieee.org/abstract/document/6353522
+
 		- CORNIA
 		  collapsed:: true
 			- Ye, P., Kumar, J., Kang, L., & Doermann, D. (2012). "Unsupervised feature learning framework for no-reference image quality assessment." *2012 IEEE Conference on Computer Vision and Pattern Recognition*, 1098-1105
 			- DOI: 10.1109/CVPR.2012.6247790
 			- Contribution: A pioneering work in using unsupervised learning for NR-IQA. It creates a codebook of visual "words" from image patches and uses the representation to predict quality
+			-https://ieeexplore.ieee.org/abstract/document/6247790
+
 		- DB-CNN
 		  collapsed:: true
 			- Zhang, W., Ma, K., Yan, J., Deng, D., & Wang, Z. (2018). "Blind Image Quality Assessment Using a Deep Bilinear Convolutional Neural Network." *IEEE Transactions on Circuits and Systems for Video Technology, 30*(1), 36-47
-			- DOI: 10.1109/TCSVT.2018.2883771
+			- DOI: 10.1109/TCSVT.2018.2886771
 			- Contribution: A deep learning model with a two-stream architecture to handle both synthetic and authentic distortions, using bilinear pooling to fuse the features effectively
+			- https://ieeexplore.ieee.org/document/8576582
+
+			
+
+
 	- State-of-the-Art & Deep Learning Methods
 	  collapsed:: true
 		- HyperIQA
@@ -177,27 +188,40 @@
 			- Su, S., Yan, Q., Zhu, Y., Zhang, C., Ge, S., Sun, W., & Zhang, J. (2020). "Blindly Assess Image Quality in the Wild Guided by a Self-Adaptive Hyper-Network." *2020 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*, 13730-13739
 			- DOI: 10.1109/CVPR42600.2020.01374
 			- Contribution: A novel approach that uses a hyper-network to adaptively adjust the quality prediction model based on the image content, making it highly effective for "in-the-wild" images
+			- https://openaccess.thecvf.com/content_CVPR_2020/papers/Su_Blindly_Assess_Image_Quality_in_the_Wild_Guided_by_a_CVPR_2020_paper.pdf
+
+			
+
+			
 		- MANIQA
 		  collapsed:: true
 			- Yang, S., Lin, T., Wang, H., Wu, J., Zhang, W., & Cao, X. (2022). "MANIQA: Multi-dimension Attention Network for No-Reference Image Quality Assessment." *2022 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*, 1191-1200
 			- DOI: 10.1109/CVPR52688.2022.00126
 			- Contribution: A Transformer-based model that uses a multi-dimensional attention mechanism to capture both local and global image features, achieving state-of-the-art performance
+			- https://openaccess.thecvf.com/content/CVPR2022W/NTIRE/papers/Yang_MANIQA_Multi-Dimension_Attention_Network_for_No-Reference_Image_Quality_Assessment_CVPRW_2022_paper.pdf
+			
+
 		- TOPIQ
 		  collapsed:: true
 			- Cui, Z., Chen, T., Xu, S., & Li, C. (2023). "From Patches to Pictures: A Coarse-to-Fine Network for Blind Image Quality Assessment." *arXiv preprint arXiv:2308.03060*
 			- DOI: 10.48550/arXiv.2308.03060
 			- Contribution: A model that mimics human visual perception by using a coarse-to-fine attention network. It leverages high-level semantics to guide the assessment of low-level distortions
+			- https://ieeexplore.ieee.org/abstract/document/10478301
+
 	- Survey & Review Papers
 	  collapsed:: true
 		- "No-Reference Image Quality Assessment: Past, Present, and Future" (2025)
 		  collapsed:: true
 			- Contribution: Placeholder for a recent comprehensive survey paper giving broad overview of the field, its evolution, and future directions. Searching for a 2024 or 2025 survey in journals like *IEEE Transactions on Image Processing* or CVPR reviews would be beneficial
+
 		- "A Survey of Learning-Based No-Reference Image Quality Assessment"
 		  collapsed:: true
 			- Contribution: Focuses specifically on the evolution of learning-based methods, from traditional ML to modern deep learning architectures. Good overview of different learning paradigms used in NR-IQA
+
 		- "Progress in Blind Image Quality Assessment: A Brief Review"
 		  collapsed:: true
 			- Contribution: Discusses current challenges in NR-IQA (e.g., authentic distortions, model generalization, trade-off between performance and complexity) and insights into future research directions
+
 	- Image Smoothing & Noise Reduction (Filters)
 	  collapsed:: true
 		- Gaussian Filter
