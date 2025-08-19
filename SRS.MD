@@ -1,5 +1,4 @@
-# Software Requirements Specification (SRS)  
-## Hybrid IQA Regressor: Classical + Deep Fusion  
+# Hybrid IQA Regressor: Classical + Deep Fusion  
 
 ***
 
