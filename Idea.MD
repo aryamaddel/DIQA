@@ -186,7 +186,7 @@
 		- HyperIQA
 		  collapsed:: true
 			- Su, S., Yan, Q., Zhu, Y., Zhang, C., Ge, S., Sun, W., & Zhang, J. (2020). "Blindly Assess Image Quality in the Wild Guided by a Self-Adaptive Hyper-Network." *2020 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*, 13730-13739
-			- DOI: 10.1109/CVPR42600.2020.01374
+
 			- Contribution: A novel approach that uses a hyper-network to adaptively adjust the quality prediction model based on the image content, making it highly effective for "in-the-wild" images
 			- https://openaccess.thecvf.com/content_CVPR_2020/papers/Su_Blindly_Assess_Image_Quality_in_the_Wild_Guided_by_a_CVPR_2020_paper.pdf
 
@@ -196,7 +196,6 @@
 		- MANIQA
 		  collapsed:: true
 			- Yang, S., Lin, T., Wang, H., Wu, J., Zhang, W., & Cao, X. (2022). "MANIQA: Multi-dimension Attention Network for No-Reference Image Quality Assessment." *2022 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*, 1191-1200
-			- DOI: 10.1109/CVPR52688.2022.00126
 			- Contribution: A Transformer-based model that uses a multi-dimensional attention mechanism to capture both local and global image features, achieving state-of-the-art performance
 			- https://openaccess.thecvf.com/content/CVPR2022W/NTIRE/papers/Yang_MANIQA_Multi-Dimension_Attention_Network_for_No-Reference_Image_Quality_Assessment_CVPRW_2022_paper.pdf
 			
