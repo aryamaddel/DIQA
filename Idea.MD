@@ -154,25 +154,31 @@
 		  collapsed:: true
 			- Mittal, A., Moorthy, A. K., & Bovik, A. C. (2012). "No-Reference Image Quality Assessment in the Spatial Domain." *IEEE Transactions on Image Processing, 21*(12), 4695-4708
 			- DOI: 10.1109/TIP.2012.2214050
-			-https://ieeexplore.ieee.org/abstract/document/6272356
+			- https://ieeexplore.ieee.org/abstract/document/6272356
+			- link to read : https://live.ece.utexas.edu/publications/2012/TIP%20BRISQUE.pdf
 
 		- NIQE
 		  collapsed:: true
 			- Mittal, A., Soundararajan, R., & Bovik, A. C. (2013). "Making a 'Completely Blind' Image Quality Analyzer." *IEEE Signal Processing Letters, 20*(3), 209-212
 			- DOI: 10.1109/LSP.2012.2227726
 			-https://ieeexplore.ieee.org/abstract/document/6353522
+			- Link to read: https://live.ece.utexas.edu/publications/2013/mittal2013.pdf
+
 
 		- CORNIA
 		  collapsed:: true
 			- Ye, P., Kumar, J., Kang, L., & Doermann, D. (2012). "Unsupervised feature learning framework for no-reference image quality assessment." *2012 IEEE Conference on Computer Vision and Pattern Recognition*, 1098-1105
 			- DOI: 10.1109/CVPR.2012.6247790
-			-https://ieeexplore.ieee.org/abstract/document/6247790
+			- https://ieeexplore.ieee.org/document/6247789
+			- link to read: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6247789
 
 		- DB-CNN
 		  collapsed:: true
 			- Zhang, W., Ma, K., Yan, J., Deng, D., & Wang, Z. (2018). "Blind Image Quality Assessment Using a Deep Bilinear Convolutional Neural Network." *IEEE Transactions on Circuits and Systems for Video Technology, 30*(1), 36-47
 			- DOI: 10.1109/TCSVT.2018.2886771
 			- https://ieeexplore.ieee.org/document/8576582
+			- Link to read: https://ece.uwaterloo.ca/~z70wang/publications/TCSVT_BIQA.pdf
+			
 
 			
 
