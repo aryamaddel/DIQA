@@ -173,12 +173,12 @@
 			- link to read: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6247789
 
 		- DB-CNN
-		  collapsed:: true
+		  collapsed:: truev
 			- Zhang, W., Ma, K., Yan, J., Deng, D., & Wang, Z. (2018). "Blind Image Quality Assessment Using a Deep Bilinear Convolutional Neural Network." *IEEE Transactions on Circuits and Systems for Video Technology, 30*(1), 36-47
 			- DOI: 10.1109/TCSVT.2018.2886771
 			- https://ieeexplore.ieee.org/document/8576582
 			- Link to read: https://ece.uwaterloo.ca/~z70wang/publications/TCSVT_BIQA.pdf
-			
+
 
 			
 
