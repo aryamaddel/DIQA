@@ -228,15 +228,19 @@
 		  collapsed:: true
 			- Smooths images by averaging pixels with a Gaussian-weighted kernel
 			- Useful for reducing Gaussian noise
+    Link:- https://www.researchgate.net/publication/286571511_A_new_image_denoising_method_based_on_Gaussian_filter
 		- Median Filter
 		  collapsed:: true
 			- Replaces each pixel with the median of its neighborhood
 			- Very effective for removing salt-and-pepper noise
+   Link:- https://www.mdpi.com/2079-9292/13/13/2458?utm_source=chatgpt.com
 		- Box Filter (Mean Filter)
 		  collapsed:: true
 			- Replaces each pixel with the average of its neighborhood
 			- Simple but can overly blur edges
+  Link:- https://www.researchgate.net/publication/321101233_The_Implementation_of_Image_Smoothing_to_Reduce_Noise_using_Gaussian_Filter
 		- Weighted Average Filter
 		  collapsed:: true
 			- Similar to box filter but assigns different weights to neighbors
 			- Helps preserve edges while reducing noise
+ Link:- https://www.nature.com/articles/s41598-025-92283-3?utm_source=chatgpt.com
