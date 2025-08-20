@@ -1,7 +1,3 @@
-Here’s a **condensed and merged version** of your two drafts. I’ve unified the research motivation, objectives, and system requirements into a single structured document while removing repetition.
-
----
-
 # Hybrid NR-IQA System: Classical + Deep Fusion
 
 ---
@@ -106,14 +102,39 @@ Image → Metric Extractors + Deep Model → Normalizer → Regressor → Qualit
 
 ## 9. References (Selected)
 
-* BRISQUE (Mittal et al., 2012)
-* NIQE (Mittal et al., 2013)
-* HyperIQA (Su et al., 2020)
-* MANIQA (Yang et al., 2022)
-* TOPIQ (Cui et al., 2023)
+BRISQUE (Mittal et al., 2012)
+No-Reference Image Quality Assessment in the Spatial Domain - Mittal, A., Moorthy, A. K., & Bovik, A. C.
 
----
+NIQE (Mittal et al., 2013)
+Making a 'Completely Blind' Image Quality Analyzer - Mittal, A., Soundararajan, R., & Bovik, A. C.
 
-✅ This version integrates the **research-driven structure** (intro, problem, significance) with the **practical SRS-style design** (requirements, flow, datasets, validation).
+PIQE (Venkatanath et al., 2015)
+Blind image quality evaluation using perception based features - Venkatanath, N., Praneeth, D., Bh, M. C., Channappayya, S. S., & Medasani, S. S.
 
-Do you want me to **keep it in SRS format** (strict requirements doc) or more of a **research proposal style** (for project/thesis)?
+HyperIQA (Su et al., 2020)
+Blindly Assess Image Quality in the Wild Guided by a Self-Adaptive Hyper Network - Su, S., Yan, Q., Zhu, Y., Zhang, C., Ge, X., Sun, J., & Zhang, Y.
+
+MANIQA (Yang et al., 2022)
+MANIQA: Multi-dimension Attention Network for No-Reference Image Quality Assessment - Yang, S., Wu, T., Shi, S., Lao, S., Gong, Y., Cao, M., Wang, J., & Yang, Y.
+
+TOPIQ (Cui et al., 2023)
+TOPIQ: A Top-down Approach from Semantics to Distortions for Image Quality Assessment - Cui, C., Chen, C., Gu, K., Yuan, W., Chen, S., Zhang, L., & Liu, A.
+
+SSIM (Wang & Bovik, 2004)
+Image Quality Assessment: From Error Visibility to Structural Similarity - Wang, Z., Bovik, A. C., Sheikh, H. R., & Simoncelli, E. P.
+
+LIVE Database (Sheikh et al., 2006)
+LIVE Image Quality Assessment Database Release 2 - Sheikh, H. R., Wang, Z., Cormack, L., & Bovik, A. C.
+
+TID2013 Database (Ponomarenko et al., 2015)
+Image database TID2013: Peculiarities, results and perspectives - Ponomarenko, N., Ieremeiev, O., Lukin, V., et al.
+
+KonIQ-10k Database (Hosu et al., 2020)
+KonIQ-10k: An ecologically valid database for deep learning of blind image quality assessment - Hosu, V., Lin, H., Sziranyi, T., & Saupe, D.
+
+KADID-10k Database
+KADID-10k Database - Visual Quality Assessment Databases, MMSP Konstanz
+
+CSIQ Database (Larson & Chandler, 2010)
+Categorical Image Quality (CSIQ) Database - Larson, E. C. & Chandler, D. M.
+
