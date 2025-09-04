@@ -1,5 +1,6 @@
 from pathlib import Path
 import pyiqa
 
-for p in Path("KaDiD Small").glob("*.png"):
-    print(f"{p.name}: {pyiqa.create_metric('niqe')(str(p)).item():.3f}")
+metric = pyiqa.create_metric("niqe")
+for p in sorted(Path("KaDiD Small").iterdir()):
+    print(f"{p.name}: {metric(str(p)).item():.3f}")
