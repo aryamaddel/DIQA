@@ -1,6 +1,5 @@
 from pathlib import Path
 import pyiqa
 
-metric = pyiqa.create_metric("brisque")
 for p in Path("KaDiD Small").glob("*.png"):
-    print(f"{p.name}: {float(metric(str(p)).item()):.4f}")
+    print(f"{p.name}: {pyiqa.create_metric('brisque')(str(p)).item():.3f}")
