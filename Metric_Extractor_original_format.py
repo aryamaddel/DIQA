@@ -1,54 +1,47 @@
-import cv2
-from skimage import io
-from skimage.util import img_as_float
-import pyiqa
-import torch
 import os
+import torch
+import pyiqa
 import pandas as pd
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Create each metric
-brisque = pyiqa.create_metric("brisque", device=device)
-niqe = pyiqa.create_metric("niqe", device=device)
-piqe = pyiqa.create_metric("piqe", device=device)
+# metrics to compute (name -> metric instance)
+METRICS = {
+    name.upper(): pyiqa.create_metric(name, device=device)
+    for name in ("brisque", "piqe", "niqe")
+}
 
-# Path to KaDiD 10k images folder
-images_folder = os.path.join(os.path.dirname(__file__), "images")
-
-# Get all image file paths
-image_files = []
-for root, dirs, files in os.walk(images_folder):
-    for f in files:
-        if f.lower().endswith((".png", ".jpg", ".jpeg", ".bmp", ".tiff")):
-            image_files.append(os.path.join(root, f))
-
-results = []
-
-for img_path in image_files:
-    img = io.imread(img_path)
-    if img.ndim == 3:
-        img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    else:
-        img_gray = img
-    img_float = img_as_float(img_gray)
-
-    # pyiqa's img utilities accept file paths, bytes, or PIL Images.
-    # Pass the original file path so pyiqa can read/convert the image itself.
-    brisque_score = brisque(img_path).item()
-    piqe_score = piqe(img_path).item()
-    niqe_score = niqe(img_path).item()
-
-    results.append(
-        {
-            "Image": os.path.basename(img_path),
-            "BRISQUE": brisque_score,
-            "PIQE": piqe_score,
-            "NIQE": niqe_score,
-        }
-    )
+# folder with images (same folder name used originally)
+IMAGES_DIR = os.path.join(os.path.dirname(__file__), "KaDiD Small")
 
 
-df = pd.DataFrame(results)
-print(df)
-print(f"Processed {len(results)} images")
+def iter_image_files(root_dir):
+    """Yield image file paths under root_dir."""
+    for root, _, files in os.walk(root_dir):
+        for f in files:
+            if f.lower().endswith(".png"):
+                yield os.path.join(root, f)
+
+
+def score_image(path):
+    """Return dict with image basename and computed metric scores.
+
+    pyiqa accepts file paths directly, so we pass the path to each metric.
+    """
+    row = {"Image": os.path.basename(path)}
+    for key, metric in METRICS.items():
+        # metric returns a tensor; convert to Python float
+        row[key] = float(metric(path).item())
+    return row
+
+
+def main():
+    results = [score_image(p) for p in iter_image_files(IMAGES_DIR)]
+    df = pd.DataFrame(results)
+    print(df)
+    print(f"Processed {len(results)} images")
+
+
+if __name__ == "__main__":
+    main()
