@@ -1,7 +1,8 @@
 import os
-import torch
-import pyiqa
+
 import pandas as pd
+import pyiqa
+import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 METRICS = {
