@@ -1,15 +1,6 @@
 from pathlib import Path
 import pyiqa
 
-IMAGES_DIR = Path("KaDiD Small")
-
-
 metric = pyiqa.create_metric("brisque")
-images = IMAGES_DIR.glob("*.png")
-
-for p in images:
-    try:
-        score = float(metric(str(p)).item())
-        print(f"{p.name}: {score:.4f}")
-    except Exception as e:
-        print(f"{p.name}: ERROR ({e})")
+for p in Path("KaDiD Small").glob("*.png"):
+    print(f"{p.name}: {float(metric(str(p)).item()):.4f}")
