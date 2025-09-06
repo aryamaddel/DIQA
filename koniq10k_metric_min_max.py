@@ -43,7 +43,7 @@ def score_image(img_path):
 
 # Process images in parallel
 processed_count = 0
-with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as executor:
+with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
     for img_path, scores in tqdm(
         executor.map(score_image, images), total=len(images), desc="Scoring"
     ):
