@@ -3,50 +3,84 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import pyiqa
 
-image_folder = r"koniq10k_1024x768"
+image_folder = "koniq10k_1024x768"
 extensions = (".png", ".jpg", ".jpeg")
-
-
-def process_image(image_path):
-    # Create metrics inside the worker to avoid thread-safety issues
-    brisque = pyiqa.create_metric("brisque")
-    niqe = pyiqa.create_metric("niqe")
-    piqe = pyiqa.create_metric("piqe")
-    try:
-        return {
-            "brisque": brisque(image_path).item(),
-            "niqe": niqe(image_path).item(),
-            "piqe": piqe(image_path).item(),
-        }
-    except Exception:
-        return None
-
-
 images = [
     os.path.join(image_folder, f)
     for f in os.listdir(image_folder)
     if f.lower().endswith(extensions)
 ]
-
 if not images:
     print("No images found.")
     raise SystemExit(1)
 
-results = {"brisque": [], "niqe": [], "piqe": []}
+results = {k: [] for k in ("brisque", "niqe", "piqe")}
+min_max_info = {
+    k: {"min": float("inf"), "max": float("-inf"), "min_img": None, "max_img": None}
+    for k in results
+}
+log_interval, log_file, processed_count = 10, "score_log.txt", 0
 
-# Adjust max_workers as needed
 with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as executor:
-    futures = [executor.submit(process_image, img) for img in images]
+    futures = {
+        executor.submit(
+            lambda img: (
+                img,
+                pyiqa.create_metric("brisque")(img).item(),
+                pyiqa.create_metric("niqe")(img).item(),
+                pyiqa.create_metric("piqe")(img).item(),
+            ),
+            img,
+        ): img
+        for img in images
+    }
     for fut in tqdm(as_completed(futures), total=len(futures), desc="Scoring"):
-        scores = fut.result()
-        if scores:
-            for k, v in scores.items():
+        try:
+            img_path, brisque_score, niqe_score, piqe_score = fut.result()
+            for k, v in zip(results, (brisque_score, niqe_score, piqe_score)):
                 results[k].append(v)
+                if v < min_max_info[k]["min"]:
+                    min_max_info[k]["min"], min_max_info[k]["min_img"] = (
+                        v,
+                        os.path.basename(img_path),
+                    )
+                if v > min_max_info[k]["max"]:
+                    min_max_info[k]["max"], min_max_info[k]["max_img"] = (
+                        v,
+                        os.path.basename(img_path),
+                    )
+        except Exception:
+            continue
+        processed_count += 1
+        if processed_count % log_interval == 0:
+            with open(log_file, "a") as f:
+                f.write(f"After {processed_count} images:\n")
+                for k in results:
+                    vals = results[k]
+                    if vals:
+                        f.write(
+                            f"{k.upper()} - Min: {min_max_info[k]['min']:.4f} ({min_max_info[k]['min_img']}), Max: {min_max_info[k]['max']:.4f} ({min_max_info[k]['max_img']}) (n={len(vals)})\n"
+                        )
+                    else:
+                        f.write(f"{k.upper()} - No valid scores.\n")
+                f.write("\n")
 
-for name, values in results.items():
-    if values:
+with open(log_file, "a") as f:
+    f.write(f"After {processed_count} images:\n")
+    for k in results:
+        vals = results[k]
+        if vals:
+            f.write(
+                f"{k.upper()} - Min: {min_max_info[k]['min']:.4f} ({min_max_info[k]['min_img']}), Max: {min_max_info[k]['max']:.4f} ({min_max_info[k]['max_img']}) (n={len(vals)})\n"
+            )
+        else:
+            f.write(f"{k.upper()} - No valid scores.\n")
+    f.write("\n")
+
+for k, vals in results.items():
+    if vals:
         print(
-            f"{name.upper()} - Min: {min(values):.4f}, Max: {max(values):.4f} (n={len(values)})"
+            f"{k.upper()} - Min: {min_max_info[k]['min']:.4f} ({min_max_info[k]['min_img']}), Max: {min_max_info[k]['max']:.4f} ({min_max_info[k]['max_img']}) (n={len(vals)})"
         )
     else:
-        print(f"{name.upper()} - No valid scores.")
+        print(f"{k.upper()} - No valid scores.")
