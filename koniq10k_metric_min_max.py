@@ -3,8 +3,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import pyiqa
 
-image_folder = r"koniq10k_1024x768\1024x768"
+image_folder = r"koniq10k_1024x768"
 extensions = (".png", ".jpg", ".jpeg")
+
 
 def process_image(image_path):
     # Create metrics inside the worker to avoid thread-safety issues
@@ -19,6 +20,7 @@ def process_image(image_path):
         }
     except Exception:
         return None
+
 
 images = [
     os.path.join(image_folder, f)
@@ -43,6 +45,8 @@ with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as executor:
 
 for name, values in results.items():
     if values:
-        print(f"{name.upper()} - Min: {min(values):.4f}, Max: {max(values):.4f} (n={len(values)})")
+        print(
+            f"{name.upper()} - Min: {min(values):.4f}, Max: {max(values):.4f} (n={len(values)})"
+        )
     else:
         print(f"{name.upper()} - No valid scores.")
