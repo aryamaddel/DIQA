@@ -32,12 +32,6 @@ for image_name in tqdm(random_images):
         niqe_score = niqe_metric(image_path).item()
         piqe_score = piqe_metric(image_path).item()
 
-        # Invert and normalize scores to align with MOS
-        brisque_score = 1 + 4 * (
-            1 - (brisque_score - 0) / (100 - 0)
-        )  # BRISQUE range ~0-100
-        niqe_score = 1 + 4 * (1 - (niqe_score - 0) / (15 - 0))  # NIQE range ~0-15
-        piqe_score = 1 + 4 * (1 - (piqe_score - 0) / (100 - 0))  # PIQE range ~0-100
     except Exception as e:
         print(f"Error processing {image_name}: {e}")
         continue
@@ -57,6 +51,6 @@ for image_name in tqdm(random_images):
 results_df = pd.DataFrame(results)
 
 print("Quality Assessment Results:")
-print(results_df.head())
+print(results_df)
 
 
