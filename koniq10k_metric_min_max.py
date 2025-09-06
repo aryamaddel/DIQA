@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import pyiqa
 
-image_folder = "koniq10k_1024x768"
+image_folder = r"koniq10k_1024x768\1024x768"
 extensions = (".png", ".jpg", ".jpeg")
 
 def process_image(image_path):
