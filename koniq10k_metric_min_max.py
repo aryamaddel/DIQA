@@ -19,7 +19,7 @@ min_max_info = {
     k: {"min": float("inf"), "max": float("-inf"), "min_img": None, "max_img": None}
     for k in results
 }
-log_interval, log_file, processed_count = 10, "score_log.txt", 0
+log_interval, processed_count = 500, 0
 
 with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as executor:
     futures = {
@@ -53,29 +53,25 @@ with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as executor:
             continue
         processed_count += 1
         if processed_count % log_interval == 0:
-            with open(log_file, "a") as f:
-                f.write(f"After {processed_count} images:\n")
-                for k in results:
-                    vals = results[k]
-                    if vals:
-                        f.write(
-                            f"{k.upper()} - Min: {min_max_info[k]['min']:.4f} ({min_max_info[k]['min_img']}), Max: {min_max_info[k]['max']:.4f} ({min_max_info[k]['max_img']}) (n={len(vals)})\n"
-                        )
-                    else:
-                        f.write(f"{k.upper()} - No valid scores.\n")
-                f.write("\n")
+            print(f"\nAfter {processed_count} images:")
+            for k in results:
+                vals = results[k]
+                if vals:
+                    print(
+                        f"{k.upper()} - Min: {min_max_info[k]['min']:.4f} ({min_max_info[k]['min_img']}), Max: {min_max_info[k]['max']:.4f} ({min_max_info[k]['max_img']}) (n={len(vals)})"
+                    )
+                else:
+                    print(f"{k.upper()} - No valid scores.")
 
-with open(log_file, "a") as f:
-    f.write(f"After {processed_count} images:\n")
-    for k in results:
-        vals = results[k]
-        if vals:
-            f.write(
-                f"{k.upper()} - Min: {min_max_info[k]['min']:.4f} ({min_max_info[k]['min_img']}), Max: {min_max_info[k]['max']:.4f} ({min_max_info[k]['max_img']}) (n={len(vals)})\n"
-            )
-        else:
-            f.write(f"{k.upper()} - No valid scores.\n")
-    f.write("\n")
+print(f"\nAfter {processed_count} images:")
+for k in results:
+    vals = results[k]
+    if vals:
+        print(
+            f"{k.upper()} - Min: {min_max_info[k]['min']:.4f} ({min_max_info[k]['min_img']}), Max: {min_max_info[k]['max']:.4f} ({min_max_info[k]['max_img']}) (n={len(vals)})"
+        )
+    else:
+        print(f"{k.upper()} - No valid scores.")
 
 for k, vals in results.items():
     if vals:
