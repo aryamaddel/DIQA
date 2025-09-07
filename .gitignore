@@ -7,3 +7,6 @@
 .idea
 
 *.pt
+
+koniq10k_indicators.csv
+koniq10k_scores_and_distributions.csv
