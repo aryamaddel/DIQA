@@ -3,8 +3,6 @@ import cv2
 from scipy import stats
 from skimage.feature import local_binary_pattern
 from skimage.measure import shannon_entropy
-import warnings
-warnings.filterwarnings('ignore')
 
 # Feature names for reference
 feature_names = [

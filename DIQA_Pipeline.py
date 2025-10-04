@@ -1,5 +1,4 @@
 import numpy as np
-from pathlib import Path
 from preprocess import preprocess_image
 from feature_extractor import extract_features, feature_names
 
