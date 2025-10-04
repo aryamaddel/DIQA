@@ -90,7 +90,7 @@ class FeatureExtractor:
         
         # Mean saturation (HSV)
         hsv = cv2.cvtColor((rgb * 255).astype(np.uint8), cv2.COLOR_RGB2HSV)
-        mean_saturation = np.mean(hsv[:, :, 1]) / 255.0
+        mean_saturation = np.mean(hsv[:, :, 1].astype(float)) / 255.0
         
         return [colorfulness, mean_saturation]
     
