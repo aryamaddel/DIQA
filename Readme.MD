@@ -135,14 +135,14 @@ router = XGBClassifier(
 
 ---
 
-### **3.7 Inference and Confidence Handling**
+### **3.7 Inference and Deterministic Routing**
 
 During inference:
 
 1. Features are extracted from the input image.
-2. XGBoost predicts the best IQA method and its confidence.
-3. If confidence ≥ 0.5, only the selected IQA method runs.
-4. If confidence < 0.5, the top-2 methods are executed, and their MOS values are averaged using confidence-based weights.
+2. XGBoost predicts the best IQA method and provides confidence scores.
+3. The top-1 predicted method is **always selected** (deterministic routing).
+4. Only the selected IQA method runs, ensuring maximum efficiency.
 5. The final output includes:
 
    ```
@@ -150,11 +150,18 @@ During inference:
        "MOS_estimate": value,
        "Selected_Model": name,
        "Confidence": value,
-       "Inference_Time": time_ms
+       "Inference_Time": time_ms,
+       "Router_Probabilities": {...}
    }
    ```
 
-This design balances speed and reliability.
+**Why Deterministic?**
+- The router is trained on thousands of images and already learns the optimal selection
+- Running multiple methods when confidence is low adds computational cost without guaranteed accuracy improvement
+- Simpler code with single execution path (no branching logic)
+- Trusts the router's training to make the best decision every time
+
+This design maximizes both speed and simplicity while maintaining accuracy.
 
 ---
 
