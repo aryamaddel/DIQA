@@ -1,54 +1,106 @@
-# **Project Title:**
+# NR-IQA: Adaptive Image Quality Assessment# **Project Title:**
 
-**Adaptive and Efficient Framework for No-Reference Image Quality Assessment Using Handcrafted Feature-Driven XGBoost Routing**
 
----
 
-## **1. Introduction**
+Adaptive no-reference image quality assessment using XGBoost router to select optimal IQA method per image.**Adaptive and Efficient Framework for No-Reference Image Quality Assessment Using Handcrafted Feature-Driven XGBoost Routing**
 
-Assessing the perceptual quality of an image without a reference (i.e., *no-reference image quality assessment* or NR-IQA) is a fundamental problem in digital image processing. Traditional NR-IQA algorithms such as **BRISQUE**, **NIQE**, and **PIQE** offer fast quality estimation using handcrafted statistical features but often fail under complex, unseen distortions. In contrast, deep learning-based models such as **HyperIQA** and **MANIQA** deliver high correlation with human subjective perception but are computationally expensive and impractical for real-time or large-scale applications.
 
-The challenge arises because no single NR-IQA method performs consistently well across all types of images or distortions. Selecting the best IQA algorithm manually for each use case is time-consuming and requires expert knowledge. Therefore, this project proposes an **adaptive IQA routing framework** that automatically selects the most appropriate NR-IQA method for a given image using a lightweight, data-driven decision mechanism. The system aims to combine the efficiency of traditional methods with the adaptability of modern learning-based models, achieving high accuracy and speed while remaining interpretable and computationally feasible.
 
----
+## Setup---
 
-## **2. Objective**
 
-The main objective of this project is to design and implement a **fast, intelligent, and generalizable IQA routing pipeline** that:
+
+```bash## **1. Introduction**
+
+pip install -r requirements.txt
+
+```Assessing the perceptual quality of an image without a reference (i.e., *no-reference image quality assessment* or NR-IQA) is a fundamental problem in digital image processing. Traditional NR-IQA algorithms such as **BRISQUE**, **NIQE**, and **PIQE** offer fast quality estimation using handcrafted statistical features but often fail under complex, unseen distortions. In contrast, deep learning-based models such as **HyperIQA** and **MANIQA** deliver high correlation with human subjective perception but are computationally expensive and impractical for real-time or large-scale applications.
+
+
+
+## UsageThe challenge arises because no single NR-IQA method performs consistently well across all types of images or distortions. Selecting the best IQA algorithm manually for each use case is time-consuming and requires expert knowledge. Therefore, this project proposes an **adaptive IQA routing framework** that automatically selects the most appropriate NR-IQA method for a given image using a lightweight, data-driven decision mechanism. The system aims to combine the efficiency of traditional methods with the adaptability of modern learning-based models, achieving high accuracy and speed while remaining interpretable and computationally feasible.
+
+
+
+### Full Pipeline---
+
+Run `DIQA_Pipeline.ipynb` notebook sequentially:
+
+1. Extract features from images## **2. Objective**
+
+2. Compute IQA scores (BRISQUE, NIQE, PIQE, MANIQA, HyperIQA)
+
+3. Train router to select best IQA methodThe main objective of this project is to design and implement a **fast, intelligent, and generalizable IQA routing pipeline** that:
+
+4. Evaluate performance
 
 1. Analyzes an input image using a set of low-cost handcrafted features.
-2. Predicts which NR-IQA algorithm (traditional or deep) will yield the most accurate perceptual quality score.
-3. Runs only the selected IQA algorithm to compute the final quality score, normalized to the **Mean Opinion Score (MOS)** scale.
-4. Provides a confidence value and logs data for potential retraining and performance monitoring.
 
-This approach directly addresses the problem of *algorithm selection* in NR-IQA and enhances both computational efficiency and generalizability.
+### Inference Only2. Predicts which NR-IQA algorithm (traditional or deep) will yield the most accurate perceptual quality score.
 
----
+```python3. Runs only the selected IQA algorithm to compute the final quality score, normalized to the **Mean Opinion Score (MOS)** scale.
 
-## **3. Methodology**
+from router import predict4. Provides a confidence value and logs data for potential retraining and performance monitoring.
 
-### **3.1 Overview of the Proposed Pipeline**
 
-**Flow:**
-`Input Image → Handcrafted Feature Extractor → XGBoost Router → Selected IQA Model → MOS Mapping → Output (Score, Confidence, Selected Model)`
+
+result = predict("path/to/image.jpg", confidence_threshold=0.5)This approach directly addresses the problem of *algorithm selection* in NR-IQA and enhances both computational efficiency and generalizability.
+
+print(f"MOS: {result['MOS_estimate']:.2f}")
+
+print(f"Method: {result['selected_method']}")---
+
+print(f"Confidence: {result['confidence']:.2f}")
+
+```## **3. Methodology**
+
+
+
+## Modules### **3.1 Overview of the Proposed Pipeline**
+
+
+
+- `features.py` - Extract 19 handcrafted features (luminance, color, sharpness, texture, frequency)**Flow:**
+
+- `scoring.py` - Compute raw IQA scores using PyIQA`Input Image → Handcrafted Feature Extractor → XGBoost Router → Selected IQA Model → MOS Mapping → Output (Score, Confidence, Selected Model)`
+
+- `router.py` - XGBoost-based adaptive method selection and MOS prediction
 
 The system operates in two main stages:
 
+## Files
+
 1. **Router (Decision Gate):**
-   A lightweight XGBoost classifier analyzes handcrafted image features and predicts which IQA algorithm is likely to perform best.
 
-2. **Quality Assessment:**
-   The selected IQA algorithm is executed to obtain a raw quality score, which is then mapped to the MOS scale using pre-computed regression parameters.
+- `router_xgb.json` - Trained router model   A lightweight XGBoost classifier analyzes handcrafted image features and predicts which IQA algorithm is likely to perform best.
 
----
+- `scaler.pkl` - Feature scaler
 
-### **3.2 Datasets**
+- `mos_mapping_coefficients.json` - IQA score to MOS mapping2. **Quality Assessment:**
 
-The primary dataset used is **KONIQ-10k**, containing 10,073 images with authentic distortions and associated **human-rated MOS values**.
+- `DIQA_Pipeline.ipynb` - Complete training and evaluation pipeline   The selected IQA algorithm is executed to obtain a raw quality score, which is then mapped to the MOS scale using pre-computed regression parameters.
+
+
+
+## Performance---
+
+
+
+System achieves competitive SROCC/PLCC with lower inference time by adaptively selecting between fast traditional methods and accurate deep learning models based on image characteristics.### **3.2 Datasets**
+
+
+
+## Cleanup RecommendationsThe primary dataset used is **KONIQ-10k**, containing 10,073 images with authentic distortions and associated **human-rated MOS values**.
+
 To assess generalization, cross-dataset testing can be conducted using datasets such as:
 
-* **LIVE Challenge Dataset**
-* **SPAQ Dataset**
+After consolidation, these files can be removed:
+
+- `feature_extractor.py` (replaced by `features.py`)* **LIVE Challenge Dataset**
+
+- `iqa_scorers.py` (replaced by `scoring.py`)* **SPAQ Dataset**
+
+- `inference.py` (replaced by `router.py`)
 
 These datasets ensure diversity in image content and distortion types.
 

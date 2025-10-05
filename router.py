@@ -2,9 +2,9 @@ import numpy as np
 import pyiqa
 import joblib
 import json
-from xgboost import XGBClassifier
-from feature_extractor import extract_features
 import time
+from xgboost import XGBClassifier
+from features import extract_features
 
 router = XGBClassifier()
 router.load_model("router_xgb.json")
@@ -65,10 +65,3 @@ def predict(image_path, confidence_threshold=0.5, use_top_k=2):
         },
         "router_probabilities": {iqa_methods[i]: float(probs[i]) for i in range(len(iqa_methods))}
     }
-
-if __name__ == "__main__":
-    result = predict("koniq10k_512x384/826373.jpg", confidence_threshold=0.6)
-    print(f"Image: {result['image_path']}")
-    print(f"MOS: {result['MOS_estimate']:.4f}")
-    print(f"Method: {result['selected_method']} (confidence: {result['confidence']:.4f})")
-    print(f"Time: {result['timing']['total_time_ms']:.2f} ms")

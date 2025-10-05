@@ -1,0 +1,12 @@
+numpy
+pandas
+opencv-python
+scipy
+scikit-image
+scikit-learn
+xgboost
+pyiqa
+matplotlib
+seaborn
+tqdm
+joblib

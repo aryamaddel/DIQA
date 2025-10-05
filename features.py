@@ -1,6 +1,5 @@
 import numpy as np
 import cv2
-from pathlib import Path
 from scipy import stats
 from skimage.feature import local_binary_pattern
 from skimage.measure import shannon_entropy
@@ -12,8 +11,8 @@ feature_names = ["mean_luminance", "std_luminance", "skewness_luminance", "kurto
                  "noise_std_estimate", "blockiness_energy", "rms_contrast", "percentile_contrast", 
                  "low_freq_energy", "mid_freq_energy", "high_freq_energy"]
 
-def extract_features(image_path: str | Path) -> np.ndarray:
-    bgr = cv2.imread(str(Path(image_path)), cv2.IMREAD_COLOR)
+def extract_features(image_path):
+    bgr = cv2.imread(str(image_path))
     if bgr is None:
         raise ValueError(f"Unable to read: {image_path}")
     
