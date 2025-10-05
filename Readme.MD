@@ -1,162 +1,255 @@
-### Quick summary of decisions
+# **Project Title:**
 
-* **Main goals:** usefulness across users + speed.
-* **Router:** simple, interpretable, fast classifier using **handcrafted features**.
-* **IQA set (initial):** BRISQUE, NIQE, PIQE (fast traditional) + MANIQA, HyperIQA (representative deep NR-IQA).
-* **Dataset:** **Train on KONIQ-10k**; **test (cross-evaluate)** on one other realistic dataset (e.g., LIVE Challenge / SPAQ — use whichever is closest in style to KONIQ for cross-testing).
-* **Evaluation metrics:** SROCC, PLCC, RMSE for quality prediction; Router accuracy; latency/inference-time comparison; compute savings vs. always-running heavy models.
-* **Baseline:** best single IQA method on the validation set (so you can show gains vs. “always use X”).
+**Adaptive and Efficient Framework for No-Reference Image Quality Assessment Using Handcrafted Feature-Driven XGBoost Routing**
 
 ---
 
-### Concrete pipeline (what you will implement)
+## **1. Introduction**
 
-1. **Preprocess image** (resize / standardize).
-2. **Extract handcrafted features** (fast, detailed below).
-3. **Router (classifier)** takes features → predicts one IQA method.
-4. **Run chosen IQA** → produce score → **map/normalize** to MOS scale.
-5. **Output**: `{MOS_estimate, confidence, selected_model, time_taken}` and **log** for retraining.
+Assessing the perceptual quality of an image without a reference (i.e., *no-reference image quality assessment* or NR-IQA) is a fundamental problem in digital image processing. Traditional NR-IQA algorithms such as **BRISQUE**, **NIQE**, and **PIQE** offer fast quality estimation using handcrafted statistical features but often fail under complex, unseen distortions. In contrast, deep learning-based models such as **HyperIQA** and **MANIQA** deliver high correlation with human subjective perception but are computationally expensive and impractical for real-time or large-scale applications.
+
+The challenge arises because no single NR-IQA method performs consistently well across all types of images or distortions. Selecting the best IQA algorithm manually for each use case is time-consuming and requires expert knowledge. Therefore, this project proposes an **adaptive IQA routing framework** that automatically selects the most appropriate NR-IQA method for a given image using a lightweight, data-driven decision mechanism. The system aims to combine the efficiency of traditional methods with the adaptability of modern learning-based models, achieving high accuracy and speed while remaining interpretable and computationally feasible.
 
 ---
 
-### Recommended handcrafted feature set (minimal but strong)
+## **2. Objective**
 
-Compute these fast features — they capture brightness, contrast, sharpness, noise, color, texture, and basic compression/blockiness cues. Use `scikit-image` + simple NumPy ops.
+The main objective of this project is to design and implement a **fast, intelligent, and generalizable IQA routing pipeline** that:
 
-1. **Global stats (6)**
+1. Analyzes an input image using a set of low-cost handcrafted features.
+2. Predicts which NR-IQA algorithm (traditional or deep) will yield the most accurate perceptual quality score.
+3. Runs only the selected IQA algorithm to compute the final quality score, normalized to the **Mean Opinion Score (MOS)** scale.
+4. Provides a confidence value and logs data for potential retraining and performance monitoring.
 
-   * mean(RGB luminance), std(luminance), skewness, kurtosis, entropy, median.
-
-2. **Colorfulness & saturation (2)**
-
-   * colorfulness metric (Hasler & Süsstrunk style), mean saturation.
-
-3. **Sharpness / Blur (2)**
-
-   * variance of Laplacian, Tenengrad (mean gradient magnitude).
-
-4. **Edge density / texture (2)**
-
-   * Canny edge pixel ratio, local binary pattern (LBP) histogram summary (e.g., 8 bins).
-
-5. **Noise / smoothness (1)**
-
-   * estimate noise std via median absolute deviation on high-pass residual.
-
-6. **Blockiness / compression indicator (1)**
-
-   * block artifact energy: compare variance inside 8×8 blocks vs. neighbors.
-
-7. **Contrast & dynamic range (2)**
-
-   * RMS contrast, percentile-based contrast (90th–10th).
-
-8. **Frequency energy bands (3)**
-
-   * mean power in low / mid / high freq bands from a small DCT or FFT patch sample.
-
-**Total ≈ 19–20 features** — small, fast, and interpretable. This keeps training stable and inference tiny.
+This approach directly addresses the problem of *algorithm selection* in NR-IQA and enhances both computational efficiency and generalizability.
 
 ---
 
-### Router model choice (recommended)
+## **3. Methodology**
 
-* **Random Forest classifier** (100 trees, max depth 12)
+### **3.1 Overview of the Proposed Pipeline**
 
-  * Why: robust, fast inference, gives class probabilities (confidence), interpretable feature importances, simple to train with little hyper-tuning.
-* If you want slightly smaller memory & faster predict, use **LightGBM** or **XGBoost** with shallow trees.
-* Alternative: a tiny MLP (1 hidden layer, 64 units) if you prefer pure NN — but RF is my pick.
+**Flow:**
+`Input Image → Handcrafted Feature Extractor → XGBoost Router → Selected IQA Model → MOS Mapping → Output (Score, Confidence, Selected Model)`
 
-**Router output:** predicted best-scorer label + probability vector → use probability as *confidence*.
+The system operates in two main stages:
 
----
+1. **Router (Decision Gate):**
+   A lightweight XGBoost classifier analyzes handcrafted image features and predicts which IQA algorithm is likely to perform best.
 
-### How to create training labels for router
-
-For each KONIQ-10k image:
-
-1. Compute outputs from every candidate IQA algorithm.
-2. Convert each algorithm’s output to the MOS range (simple linear fit on a small validation split).
-3. Compute absolute error vs. ground-truth MOS for each method.
-4. Label image with the method that has **minimum absolute error** (tie-break by lower runtime or prefer traditional if equal).
-   This yields supervised labels for router training.
+2. **Quality Assessment:**
+   The selected IQA algorithm is executed to obtain a raw quality score, which is then mapped to the MOS scale using pre-computed regression parameters.
 
 ---
 
-### Confidence & fallback
+### **3.2 Datasets**
 
-* If router probability for top class < 0.5, **fallback policy**: run top-2 scorers and **combine** (simple average weighted by router probs).
-* This keeps things safe and improves robustness without much complexity.
+The primary dataset used is **KONIQ-10k**, containing 10,073 images with authentic distortions and associated **human-rated MOS values**.
+To assess generalization, cross-dataset testing can be conducted using datasets such as:
 
----
+* **LIVE Challenge Dataset**
+* **SPAQ Dataset**
 
-### MOS mapping (simple)
-
-* For each IQA method, compute a **linear regression** (OLS) from the method’s raw score to MOS on a validation split. Save slope & intercept. At inference, apply that mapping. This is simple and effective.
-
----
-
-### Evaluation plan (experiments to run)
-
-1. **Router accuracy:** % images where router picked the single best method.
-2. **Quality metrics:** SROCC, PLCC, RMSE of final MOS estimate — compare:
-
-   * Router system (single chosen method)
-   * Router w/ top-2 fusion
-   * Each candidate IQA individually (identify best single baseline)
-3. **Latency & compute:** average inference time (feature extraction + router + selected IQA) vs. running **only** heavy model (MANIQA or HyperIQA) on all images.
-4. **Cross-dataset generalization:** train router on KONIQ-10k; test MOS performance and router behavior on another dataset (LIVE Challenge or SPAQ).
-5. **Ablation:** remove one feature group (e.g., no frequency features) to show effect.
+These datasets ensure diversity in image content and distortion types.
 
 ---
 
-### Baselines to compare against
+### **3.3 Handcrafted Feature Extraction**
 
-* **Best single IQA** from validation (this is the main baseline).
-* **Always traditional fast method** (e.g., BRISQUE) — shows gains for edge cases where deep models shine.
-* **Always deep model (MANIQA/HyperIQA)** — shows compute vs. accuracy tradeoff.
+To maintain computational simplicity and interpretability, the router uses a compact set (~19) of handcrafted features that efficiently characterize global image quality indicators:
 
----
+| Category                      | Example Features                                         | Count |
+| ----------------------------- | -------------------------------------------------------- | ----- |
+| **Global statistics**         | mean luminance, std, skewness, kurtosis, entropy, median | 6     |
+| **Colorfulness & saturation** | colorfulness index, mean saturation                      | 2     |
+| **Sharpness / blur**          | variance of Laplacian, Tenengrad gradient magnitude      | 2     |
+| **Edge density / texture**    | Canny edge ratio, LBP histogram summary                  | 2     |
+| **Noise / smoothness**        | residual noise standard deviation                        | 1     |
+| **Blockiness / compression**  | block variance difference metric                         | 1     |
+| **Contrast / dynamic range**  | RMS contrast, percentile contrast                        | 2     |
+| **Frequency energy**          | mean DCT/FFT energy in low, mid, high bands              | 3     |
 
-### Logging & retraining
-
-* Log: `{features, selected_model, predicted_score, runtime, image_id}`.
-* Periodically (or when logged dataset grows) re-evaluate router with a small retraining step. Keep it simple: retrain RF with incremental dataset.
-
----
-
-### Practical speed targets (guidelines)
-
-* **Feature extraction + router:** aim for **< 50–100 ms** per image on a modern CPU (depending on image size).
-* **Traditional scorers (BRISQUE/PIQE):** tens to a few hundred ms.
-* **Deep scorers (MANIQA/HyperIQA):** hundreds of ms to seconds on CPU — so the router should avoid them for most images if not needed.
-  (Exact timings will depend on implementation & hardware; these targets help frame the goals.)
+All features are normalized and standardized before training.
+These descriptors collectively capture color, texture, contrast, sharpness, and distortion characteristics, providing enough discriminative power for routing without heavy computation.
 
 ---
 
-### Implementation stack & libraries
+### **3.4 IQA Model Pool**
 
-* Python, `numpy`, `scikit-image`, `opencv`, `scikit-learn` (RandomForest), `lightgbm` (optional), `pyiqa` or `piq` for IQA implementations, `pandas` for logs.
-* Use batch processing for initial label generation (run all scorers once per image offline).
+The router chooses from five representative NR-IQA algorithms, covering both traditional and learning-based approaches:
+
+| Type                                  | Algorithm    | Description                                                    |
+| ------------------------------------- | ------------ | -------------------------------------------------------------- |
+| **Traditional (fast)**                | **BRISQUE**  | Natural scene statistics-based model                           |
+|                                       | **NIQE**     | Unsupervised quality estimator based on distribution deviation |
+|                                       | **PIQE**     | Perception-based blockwise distortion measure                  |
+| **Deep Learning (accurate but slow)** | **HyperIQA** | CNN with hyper-network modeling visual sensitivity             |
+|                                       | **MANIQA**   | Transformer-based model for authentic distortions              |
+
+This combination ensures a wide quality-accuracy trade-off spectrum.
 
 ---
 
-### Paper / report angles you can highlight
+### **3.5 Label Generation for Router Training**
 
-* **Efficiency gains**: slicing heavy-model usage with nearly same (or better) accuracy.
-* **Interpretability**: feature importance explains routing decisions.
-* **Practicality**: easy-to-integrate pipeline for developers; offline or near-real-time capable.
-* **Robustness**: cross-dataset testing shows generalization.
+For each image in the KONIQ-10k dataset:
+
+1. All IQA algorithms are executed to obtain raw scores.
+2. Each score is linearly mapped to the MOS range using regression on a small validation subset.
+3. The absolute error between the predicted MOS and the ground-truth MOS is computed for each IQA method.
+4. The IQA method with the **lowest absolute error** becomes the “best performer” label for that image.
+
+This forms a supervised dataset where:
+
+* Input = handcrafted features
+* Target = best IQA method label (class index 0–4)
 
 ---
 
-### Minimal MVP checklist 
+### **3.6 Router Model: XGBoost Classifier**
 
-* [ ] Get KONIQ-10k MOS and images.
-* [ ] Implement feature extractor (start with the 19 features).
-* [ ] Implement BRISQUE, NIQE, PIQE wrappers and run on a subset.
-* [ ] Pick one deep IQA (MANIQA or HyperIQA) and run on a subset.
-* [ ] Label images by lowest absolute error and train RandomForest.
-* [ ] Implement inference pipeline + MOS mapping + logging.
-* [ ] Run evaluation vs. baselines and generate table/plots.
+The router is implemented using **XGBoost** due to its efficiency, robustness, and built-in feature importance analysis.
+
+**Configuration:**
+
+```python
+from xgboost import XGBClassifier
+router = XGBClassifier(
+    n_estimators=200,
+    learning_rate=0.05,
+    max_depth=6,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    gamma=0.1,
+    reg_lambda=1.0,
+    objective="multi:softprob",
+    num_class=5,
+    n_jobs=-1,
+    random_state=42
+)
+```
+
+* The model outputs class probabilities for confidence estimation.
+* Router accuracy and feature importance are evaluated using accuracy, F1-score, and gain-based importance plots.
+* Early stopping and cross-validation ensure robustness.
+
+---
+
+### **3.7 Inference and Confidence Handling**
+
+During inference:
+
+1. Features are extracted from the input image.
+2. XGBoost predicts the best IQA method and its confidence.
+3. If confidence ≥ 0.5, only the selected IQA method runs.
+4. If confidence < 0.5, the top-2 methods are executed, and their MOS values are averaged using confidence-based weights.
+5. The final output includes:
+
+   ```
+   {
+       "MOS_estimate": value,
+       "Selected_Model": name,
+       "Confidence": value,
+       "Inference_Time": time_ms
+   }
+   ```
+
+This design balances speed and reliability.
+
+---
+
+### **3.8 MOS Mapping**
+
+Each IQA model’s output is linearly transformed to the MOS scale:
+[
+MOS_{pred} = a_i \times Score_i + b_i
+]
+where (a_i) and (b_i) are regression coefficients estimated from the validation split.
+This standardization ensures fair comparison and unified scoring.
+
+---
+
+### **3.9 Evaluation Metrics**
+
+Performance is evaluated using:
+
+* **SROCC** – Spearman’s rank correlation between predicted and ground-truth MOS.
+* **PLCC** – Pearson correlation to measure linearity.
+* **RMSE** – Root Mean Square Error for accuracy.
+* **Router Accuracy** – percentage of correct IQA model predictions.
+* **Inference Time** – mean latency per image compared to running all IQA models.
+
+Baselines:
+
+1. Always using the best single IQA method (validation-based).
+2. Always using the fastest traditional IQA (e.g., BRISQUE).
+3. Always using the slowest deep IQA (e.g., MANIQA).
+
+---
+
+### **3.10 Logging and Retraining**
+
+Each inference logs:
+
+```
+{image_id, features, selected_model, predicted_MOS, confidence, runtime}
+```
+
+This can later be used for incremental retraining or domain adaptation on new data, improving the router over time.
+
+---
+
+## **4. Expected Outcomes**
+
+1. **Accuracy:** The adaptive router should outperform any single fixed IQA model in terms of SROCC/PLCC on diverse datasets.
+2. **Speed:** The average inference time should be significantly lower than deep IQA-only systems, as heavy models are used selectively.
+3. **Interpretability:** Feature importance plots will reveal which image characteristics influence algorithm selection.
+4. **Scalability:** The system can be extended to new IQA methods or domains (e.g., medical, satellite, or low-light imaging) by retraining on corresponding data.
+
+---
+
+## **5. Tools and Technologies**
+
+* **Programming Language:** Python
+* **Libraries:** `xgboost`, `numpy`, `pandas`, `scikit-image`, `opencv-python`, `scikit-learn`, `pyiqa`, `matplotlib`, `tqdm`
+* **Hardware:** CPU preferred; optional GPU for deep IQA evaluation
+* **Dataset:** KONIQ-10k (training), LIVE Challenge / SPAQ (testing)
+
+---
+
+## **6. Project Deliverables**
+
+1. Source code for:
+
+   * Handcrafted feature extractor
+   * Router training (XGBoost)
+   * Inference pipeline
+   * Evaluation scripts
+2. Trained router model (`router_xgb.json`)
+3. Results & analysis report (correlation tables, runtime comparison, feature importance plots)
+4. Research paper/report documenting methodology and findings.
+
+---
+
+## **7. Potential Research Contributions**
+
+* A **new adaptive framework** for NR-IQA algorithm selection.
+* Demonstrated **trade-off optimization** between accuracy and computational cost.
+* Insights into how **image features correlate** with algorithmic performance.
+* Foundation for **dynamic IQA systems** applicable in streaming, mobile, or large-scale image evaluation.
+
+---
+
+## **8. Future Enhancements**
+
+* Incorporate **real-time learning** to adapt router weights on newly collected MOS data.
+* Explore **hybrid fusion strategies** (weighted blending of top methods).
+* Extend to **video quality assessment (NR-VQA)** using temporal features.
+* Integrate **explainability tools** (e.g., SHAP values) for fine-grained feature interpretation.
+
+---
+
+## **9. Conclusion**
+
+This project presents a **computationally efficient and adaptive NR-IQA framework** that bridges traditional feature-based and deep learning-based quality assessment methods through intelligent routing. By leveraging handcrafted image statistics and an XGBoost classifier, the system dynamically selects the most effective IQA algorithm per image, optimizing both accuracy and runtime. The proposed approach eliminates the need for manual IQA selection, provides interpretability through feature importance, and lays the groundwork for scalable, real-world deployment in imaging applications where speed and reliability are critical.
 
