@@ -46,8 +46,8 @@ def predict(image_path):
     total_time = (time.time() - start) * 1000  # ms
 
     return {
-        "mos": mos,
-        "method": selected_method,
+        "MOS_estimate": mos,
+        "selected_method": selected_method,
         "confidence": confidence,
-        "time_ms": total_time,
+        "timing": {"total_time_ms": total_time},
     }
