@@ -21,47 +21,33 @@ def load_metric(method):
 
 
 def predict(image_path):
-    """
-    Deterministic routing: always selects the top-1 predicted method.
-    Uses linear regression coefficients for MOS mapping.
-    """
+    """Simplified deterministic routing with MOS prediction."""
     start = time.time()
 
     # Extract and scale features
     features = extract_features(image_path).reshape(1, -1)
     features_scaled = scaler.transform(features)
-    feature_time = time.time() - start
 
-    # Router inference (deterministic)
-    router_start = time.time()
+    # Router prediction (deterministic top-1)
     probs = router.predict_proba(features_scaled)[0]
     top_idx = np.argmax(probs)
-    confidence = probs[top_idx]
     selected_method = iqa_methods[top_idx]
-    router_time = time.time() - router_start
+    confidence = probs[top_idx]
 
-    # IQA computation with linear MOS mapping
-    iqa_start = time.time()
+    # Load and compute IQA score
     load_metric(selected_method)
-    score = metrics[selected_method](str(image_path)).item()
-    mos = (
-        mos_mapping[selected_method]["coef"] * score
-        + mos_mapping[selected_method]["intercept"]
-    )
-    iqa_time = time.time() - iqa_start
+    raw_score = metrics[selected_method](str(image_path)).item()
+
+    # Map to MOS scale
+    coef = mos_mapping[selected_method]["coef"]
+    intercept = mos_mapping[selected_method]["intercept"]
+    mos = coef * raw_score + intercept
+
+    total_time = (time.time() - start) * 1000  # ms
 
     return {
-        "image_path": str(image_path),
-        "MOS_estimate": float(mos),
-        "selected_method": selected_method,
-        "confidence": float(confidence),
-        "timing": {
-            "feature_extraction_ms": feature_time * 1000,
-            "router_inference_ms": router_time * 1000,
-            "iqa_computation_ms": iqa_time * 1000,
-            "total_time_ms": (time.time() - start) * 1000,
-        },
-        "router_probabilities": {
-            iqa_methods[i]: float(probs[i]) for i in range(len(iqa_methods))
-        },
+        "mos": mos,
+        "method": selected_method,
+        "confidence": confidence,
+        "time_ms": total_time,
     }
