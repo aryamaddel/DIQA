@@ -7,7 +7,9 @@ from tqdm import tqdm
 def compute_all_scores(image_dir, output_csv="iqa_raw_scores.csv"):
     iqa_methods = ["brisque", "niqe", "piqe", "maniqa", "hyperiqa"]
     metrics = {m: pyiqa.create_metric(m) for m in iqa_methods}
-    image_files = list(Path(image_dir).glob("*.jpg"))
+    image_files = list(Path(image_dir).glob("*.jpg")) + list(
+        Path(image_dir).glob("*.bmp")
+    )
     results = []
     for img_path in tqdm(image_files, desc="Computing IQA scores"):
         try:

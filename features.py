@@ -70,7 +70,7 @@ def build_features(image_dir, out_csv="features.csv"):
     imgs = [
         p
         for p in Path(image_dir).iterdir()
-        if p.suffix.lower() in (".jpg", ".jpeg", ".png")
+        if p.suffix.lower() in (".jpg", ".jpeg", ".png", ".bmp")
     ]
     rows = []
     for p in tqdm(imgs, desc="Features"):
