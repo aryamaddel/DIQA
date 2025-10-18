@@ -1,24 +1,28 @@
 # %% Imports
-import os, json
+import os
+import json
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from pathlib import Path
-import joblib, numpy as np, pandas as pd, matplotlib.pyplot as plt, seaborn as sns
 from scipy.io import loadmat
 from scipy.stats import spearmanr, pearsonr
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import confusion_matrix, mean_absolute_error, mean_squared_error
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix, mean_absolute_error, mean_squared_error
 from xgboost import XGBClassifier
 from tqdm import tqdm
-
-from features import build_features, extract_features, feature_names
-from router import predict
+import joblib
+from features import build_features, feature_names
 from scoring import compute_all_scores
+from router import predict
 
 # %% Extract Features
 image_dir = "koniq10k_512x384"
 print("Extracting features:", feature_names)
 df_features = build_features(image_dir, out_csv="features.csv")
-print(f"Extracted {df_features.shape[0]} images.\n{df_features.head()}")
+print(f"Extracted {df_features.shape[0]} images.")
 
 # %% Visualize Features
 fig, axes = plt.subplots(2, 3, figsize=(14, 8))
@@ -73,8 +77,9 @@ router.fit(X_scaled, y, verbose=50)
 y_pred = router.predict(X_scaled)
 
 print(f"Train Acc: {(y_pred==y).mean():.4f}")
+conf_matrix = confusion_matrix(y.astype(int), y_pred.astype(int))
 sns.heatmap(
-    confusion_matrix(y, y_pred),
+    conf_matrix,
     annot=True,
     fmt="d",
     cmap="Blues",
@@ -121,7 +126,11 @@ for idx, row in tqdm(df_live.iterrows(), total=len(df_live), desc="Testing"):
     except Exception as e:
         print("Error:", row.image_name, e)
 
-gt = df_live.loc[valid, "MOS"].values
+# Ensure ground truth and predictions are numpy arrays
+gt = df_live.loc[valid, "MOS"].to_numpy()
+preds = np.array(preds)
+
+# Compute metrics
 srocc, plcc = spearmanr(preds, gt)[0], pearsonr(preds, gt)[0]
 rmse, mae = np.sqrt(mean_squared_error(gt, preds)), mean_absolute_error(gt, preds)
 
@@ -130,6 +139,7 @@ print(
 )
 print(f"Avg Time: {np.mean(times):.2f}ms")
 
+# Scatter plot with numpy arrays
 plt.scatter(gt, preds, alpha=0.6, edgecolor="k")
 lims = [gt.min(), gt.max()]
 plt.plot(lims, lims, "r--")
@@ -152,14 +162,11 @@ pd.DataFrame(
 
 # %% Quick Assessment
 def assess_image(path):
-    r = predict(path)
+    result = predict(path)
     print(
-        f"\n{os.path.basename(path)} → MOS={r['MOS_estimate']:.3f}/5 | {r['selected_method']} ({r['confidence']:.2f}) | {r['timing']['total_time_ms']:.1f}ms"
+        f"\n{os.path.basename(path)} → MOS={result['MOS_estimate']:.3f}/5 | {result['selected_method']} ({result['confidence']:.2f}) | {result['timing']['total_time_ms']:.1f}ms"
     )
-    feats = extract_features(path)
-    for n, v in zip(feature_names, feats):
-        print(f"  {n.title()}: {v:.4f}")
-    return r
+    return result
 
 
 assess_image("me at night.jpg")

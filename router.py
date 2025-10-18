@@ -21,33 +21,30 @@ def load_metric(method):
 
 
 def predict(image_path):
-    """Simplified deterministic routing with MOS prediction."""
-    start = time.time()
+    """Predict the MOS and routing method for an image."""
+    start_time = time.time()
 
     # Extract and scale features
     features = extract_features(image_path).reshape(1, -1)
     features_scaled = scaler.transform(features)
 
-    # Router prediction (deterministic top-1)
-    probs = router.predict_proba(features_scaled)[0]
-    top_idx = np.argmax(probs)
-    selected_method = iqa_methods[top_idx]
-    confidence = probs[top_idx]
+    # Predict routing method
+    probabilities = router.predict_proba(features_scaled)[0]
+    top_method_idx = np.argmax(probabilities)
+    selected_method = iqa_methods[top_method_idx]
+    confidence = probabilities[top_method_idx]
 
-    # Load and compute IQA score
+    # Compute IQA score
     load_metric(selected_method)
     raw_score = metrics[selected_method](str(image_path)).item()
 
-    # Map to MOS scale
-    coef = mos_mapping[selected_method]["coef"]
-    intercept = mos_mapping[selected_method]["intercept"]
-    mos = coef * raw_score + intercept
-
-    total_time = (time.time() - start) * 1000  # ms
+    # Map raw score to MOS
+    coef, intercept = mos_mapping[selected_method].values()
+    mos_estimate = coef * raw_score + intercept
 
     return {
-        "MOS_estimate": mos,
+        "MOS_estimate": mos_estimate,
         "selected_method": selected_method,
         "confidence": confidence,
-        "timing": {"total_time_ms": total_time},
+        "timing": {"total_time_ms": (time.time() - start_time) * 1000},
     }
