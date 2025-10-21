@@ -173,4 +173,4 @@ def assess_image(path):
     return result
 
 
-assess_image("me at night.jpg")
+assess_image("koniq10k_512x384/826373.jpg")
