@@ -4,7 +4,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 
-def compute_all_scores(image_dir, output_csv="iqa_raw_scores.csv"):
+def compute_all_scores(image_dir, output_csv="Data/iqa_raw_scores.csv"):
     """Compute IQA scores for all images in a directory."""
     iqa_methods = ["brisque", "niqe", "piqe", "maniqa", "hyperiqa"]
     metrics = {method: pyiqa.create_metric(method) for method in iqa_methods}

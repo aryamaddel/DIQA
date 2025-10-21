@@ -1,4 +1,4 @@
-# %% Imports
+# %% cell 1
 import os
 import json
 import numpy as np
@@ -18,13 +18,13 @@ from features import build_features, feature_names
 from scoring import compute_all_scores
 from router import predict
 
-# %% Extract Features
+# %% cell 2
 image_dir = "koniq10k_512x384"
 print("Extracting features:", feature_names)
-df_features = build_features(image_dir, out_csv="features.csv")
+df_features = build_features(image_dir, out_csv="Data/features.csv")
 print(f"Extracted {df_features.shape[0]} images.")
 
-# %% Visualize Features
+# %% cell 3
 fig, axes = plt.subplots(2, 3, figsize=(14, 8))
 for i, f in enumerate(feature_names):
     ax = axes.ravel()[i]
@@ -34,18 +34,22 @@ plt.tight_layout()
 plt.show()
 print(df_features[feature_names].describe())
 
-# %% Compute Scores
+# %% cell 4
 compute_all_scores(image_dir)
-compute_all_scores(r"LIVE In the Wild\Images", output_csv="live_scores.csv")
+compute_all_scores(r"LIVE In the Wild\Images", output_csv="Data/live_scores.csv")
 
-# %% Build MOS Mapping & Router Dataset
+# %% cell 5
 df = (
-    pd.read_csv("iqa_raw_scores.csv")
+    pd.read_csv("Data/iqa_raw_scores.csv")
     .merge(
-        pd.read_csv("koniq10k_scores_and_distributions.csv")[["image_name", "MOS"]],
+        pd.read_csv("Data/koniq10k_scores_and_distributions.csv")[
+            ["image_name", "MOS"]
+        ],
         on="image_name",
     )
-    .merge(pd.read_csv("features.csv"), left_on="image_name", right_on="image_path")
+    .merge(
+        pd.read_csv("Data/features.csv"), left_on="image_name", right_on="image_path"
+    )
 )
 iqa_methods = ["brisque", "niqe", "piqe", "maniqa", "hyperiqa"]
 
@@ -63,11 +67,11 @@ df["best_method_label"] = df["best_method"].map(
     {m: i for i, m in enumerate(iqa_methods)}
 )
 df["best_method_error"] = pd.DataFrame(errors).min(axis=1)
-df.to_csv("router_training_data.csv", index=False)
+df.to_csv("Data/router_training_data.csv", index=False)
 print(df["best_method"].value_counts())
 
-# %% Train Router
-df = pd.read_csv("router_training_data.csv")
+# %% cell 6
+df = pd.read_csv("Data/router_training_data.csv")
 X, y = df[feature_names].values, df["best_method_label"].values
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
@@ -76,7 +80,7 @@ router = XGBClassifier(n_estimators=100, random_state=42)
 router.fit(X_scaled, y, verbose=50)
 y_pred = router.predict(X_scaled)
 
-print(f"Train Acc: {(y_pred==y).mean():.4f}")
+print(f"Train Acc: {(y_pred == y).mean():.4f}")
 conf_matrix = confusion_matrix(y.astype(int), y_pred.astype(int))
 sns.heatmap(
     conf_matrix,
@@ -96,7 +100,7 @@ plt.title("Feature Importance")
 plt.tight_layout()
 plt.show()
 
-# %% Test on LIVE In-the-Wild
+# %% cell 7
 live_dir = r"LIVE In the Wild\Images"
 mos = loadmat(r"LIVE In the Wild\Data\AllMOS_release.mat")
 imgs = loadmat(r"LIVE In the Wild\Data\AllImages_release.mat")
@@ -157,10 +161,10 @@ pd.DataFrame(
         "method": methods,
         "confidence": confs,
     }
-).to_csv("live_test_results.csv", index=False)
+).to_csv("Data/live_test_results.csv", index=False)
 
 
-# %% Quick Assessment
+# %% cell 8
 def assess_image(path):
     result = predict(path)
     print(

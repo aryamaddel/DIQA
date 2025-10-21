@@ -53,7 +53,7 @@ def extract_features(image_path):
     )
 
 
-def build_features(image_dir, out_csv="features.csv"):
+def build_features(image_dir, out_csv="Data/features.csv"):
     """Builds features for all images in a directory."""
     image_paths = list(Path(image_dir).glob("*.jpg")) + list(
         Path(image_dir).glob("*.bmp")
