@@ -165,12 +165,10 @@ pd.DataFrame(
 
 
 # %% cell 8
-def assess_image(path):
-    result = predict(path)
-    print(
-        f"\n{os.path.basename(path)} → MOS={result['MOS_estimate']:.3f}/5 | {result['selected_method']} ({result['confidence']:.2f}) | {result['timing']['total_time_ms']:.1f}ms"
-    )
-    return result
-
-
-assess_image("koniq10k_512x384/826373.jpg")
+path = "koniq10k_512x384/826373.jpg"
+result = predict(path)
+print(
+    f"\n{os.path.basename(path)} → MOS={result['MOS_estimate']:.3f}/5 | "
+    f"{result['selected_method']} ({result['confidence']:.2f}) | "
+    f"{result['timing']['total_time_ms']:.1f}ms"
+)
