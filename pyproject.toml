@@ -1,0 +1,28 @@
+[project]
+name = "diqa"
+version = "0.1.1"
+description = "A production-ready No-Reference Image Quality Assessment (NR-IQA) library."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "numpy",
+    "pandas",
+    "opencv-python",
+    "scikit-learn",
+    "xgboost",
+    "pyiqa",
+    "tqdm",
+    "matplotlib",
+    "seaborn",
+    "scipy",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["diqa*"]
+
+[tool.setuptools.package-data]
+diqa = ["models/*"]

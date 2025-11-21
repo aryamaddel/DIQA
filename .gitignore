@@ -9,3 +9,9 @@
 __pycache__/
 
 LIVE In the Wild/
+
+*.egg-info
+
+dist/
+test_models/
+dummy_mos.csv
