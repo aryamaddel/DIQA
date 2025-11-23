@@ -1,15 +1,12 @@
 import pandas as pd
 import numpy as np
 import json
-import joblib
 from pathlib import Path
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score
 from xgboost import XGBClassifier
-import matplotlib.pyplot as plt
-import seaborn as sns
+
 
 from .features import build_features, FEATURE_NAMES
 from .scoring import ScoreEngine
@@ -25,7 +22,7 @@ class DIQATrainer:
         self.score_engine = ScoreEngine()
         self.iqa_methods = self.score_engine.iqa_methods
 
-    def prepare_data(self, sample_size=None, random_seed=42):
+    def prepare_data(self):
         """
         Prepares data for training:
         1. Loads MOS data.
@@ -38,20 +35,6 @@ class DIQATrainer:
         # Expecting 'image_name' and 'MOS' columns
         if "image_name" not in df_mos.columns or "MOS" not in df_mos.columns:
             raise ValueError("MOS CSV must contain 'image_name' and 'MOS' columns.")
-
-        # Filter images that exist
-        available_images = [
-            f.name
-            for f in self.image_dir.iterdir()
-            if f.suffix.lower() in [".jpg", ".jpeg", ".bmp", ".png"]
-        ]
-        df_mos = df_mos[df_mos["image_name"].isin(available_images)]
-
-        if sample_size:
-            print(f"Sampling {sample_size} images...")
-            df_mos = df_mos.sample(
-                n=min(sample_size, len(df_mos)), random_state=random_seed
-            )
 
         image_paths = [self.image_dir / name for name in df_mos["image_name"]]
 
@@ -111,43 +94,22 @@ class DIQATrainer:
             X, y, test_size=test_split, random_state=random_seed, stratify=y
         )
 
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_test_scaled = scaler.transform(X_test)
-
         print("Training XGBoost router...")
         router = XGBClassifier(n_estimators=100, random_state=random_seed)
-        router.fit(X_train_scaled, y_train)
+        router.fit(X_train, y_train)
 
         # Evaluation
-        train_acc = router.score(X_train_scaled, y_train)
-        test_acc = router.score(X_test_scaled, y_test)
+        train_acc = router.score(X_train, y_train)
+        test_acc = router.score(X_test, y_test)
         print(f"Train Acc: {train_acc:.4f}, Test Acc: {test_acc:.4f}")
 
         # Save models
         router.save_model(self.output_dir / "router_xgb.json")
-        joblib.dump(scaler, self.output_dir / "scaler.pkl")
 
         return {
             "train_acc": train_acc,
             "test_acc": test_acc,
             "router": router,
-            "scaler": scaler,
-            "X_test": X_test_scaled,
+            "X_test": X_test,
             "y_test": y_test,
         }
-
-    def plot_confusion_matrix(self, X_test, y_test, router):
-        y_pred = router.predict(X_test)
-        cm = confusion_matrix(y_test, y_pred)
-        plt.figure(figsize=(8, 6))
-        sns.heatmap(
-            cm,
-            annot=True,
-            fmt="d",
-            cmap="Blues",
-            xticklabels=self.iqa_methods,
-            yticklabels=self.iqa_methods,
-        )
-        plt.title("Confusion Matrix")
-        plt.show()
