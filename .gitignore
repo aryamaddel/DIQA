@@ -13,5 +13,6 @@ LIVE In the Wild/
 *.egg-info
 
 dist/
+build/
 test_models/
 dummy_mos.csv

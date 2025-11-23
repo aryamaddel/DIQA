@@ -1,5 +1,6 @@
 import sys
 import os
+import pandas as pd
 from pathlib import Path
 
 # Ensure we can import the package locally

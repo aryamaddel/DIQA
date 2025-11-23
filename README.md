@@ -1,5 +1,8 @@
 # DIQA: No-Reference Image Quality Assessment Library
 
+[![PyPI version](https://badge.fury.io/py/diqa.svg)](https://badge.fury.io/py/diqa)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 DIQA is a production-ready Python library for No-Reference Image Quality Assessment (NR-IQA). It provides a unified interface for predicting image quality using multiple state-of-the-art methods and includes a routing mechanism to select the best method for a given image.
 
 ## Features

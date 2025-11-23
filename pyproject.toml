@@ -12,8 +12,6 @@ dependencies = [
     "xgboost",
     "pyiqa",
     "tqdm",
-    "matplotlib",
-    "seaborn",
     "scipy",
 ]
 
