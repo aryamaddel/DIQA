@@ -28,6 +28,8 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install flake8 pytest
+        # Install CPU-only PyTorch to save space (prevents "No space left on device")
+        pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
         # Install the package itself and dependencies from pyproject.toml
         pip install .
     - name: Lint with flake8
