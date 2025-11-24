@@ -29,32 +29,32 @@ def extract_features(image_path):
             rgb, (TARGET_SIZE[1], TARGET_SIZE[0]), interpolation=cv2.INTER_AREA
         )
 
-    rgb = rgb.astype(np.float32) / 255.0
-    gray = (
-        cv2.cvtColor((rgb * 255).astype(np.uint8), cv2.COLOR_RGB2GRAY).astype(
-            np.float32
-        )
-        / 255.0
-    )
+    # Convert once and cache both uint8 and float32 versions to avoid redundant conversions
+    rgb_uint8 = rgb
+    rgb_float = rgb.astype(np.float32) / 255.0
+    gray_uint8 = cv2.cvtColor(rgb_uint8, cv2.COLOR_RGB2GRAY)
+    gray_float = gray_uint8.astype(np.float32) / 255.0
 
-    # Compute features
-    brightness = np.mean(gray)
-    contrast = float(np.sqrt(np.mean((gray - np.mean(gray)) ** 2)))
+    # Compute features - using more efficient numpy operations
+    brightness = float(np.mean(gray_float))
+    contrast = float(
+        np.std(gray_float)
+    )  # std is more efficient than manual calculation
 
-    r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
+    r, g, b = rgb_float[:, :, 0], rgb_float[:, :, 1], rgb_float[:, :, 2]
     rg, yb = r - g, 0.5 * (r + g) - b
     colorfulness = np.sqrt(np.std(rg) ** 2 + np.std(yb) ** 2) + 0.3 * np.sqrt(
         np.mean(rg) ** 2 + np.mean(yb) ** 2
     )
 
-    gray_u8 = (gray * 255).astype(np.uint8)
-    sharpness = float(np.var(cv2.Laplacian(gray_u8, cv2.CV_64F)))
+    sharpness = float(np.var(cv2.Laplacian(gray_uint8, cv2.CV_64F)))
 
-    hsv = cv2.cvtColor((rgb * 255).astype(np.uint8), cv2.COLOR_RGB2HSV)
-    saturation = np.mean(hsv[:, :, 1].astype(float)) / 255.0
+    # Use already converted uint8 for HSV conversion
+    hsv = cv2.cvtColor(rgb_uint8, cv2.COLOR_RGB2HSV)
+    saturation = float(np.mean(hsv[:, :, 1])) / 255.0
 
-    blurred = cv2.GaussianBlur(gray, (5, 5), 1.0)
-    resid = gray - blurred
+    blurred = cv2.GaussianBlur(gray_float, (5, 5), 1.0)
+    resid = gray_float - blurred
     texture_noise = float(np.median(np.abs(resid - np.median(resid))) * 1.4826)
 
     return np.array(

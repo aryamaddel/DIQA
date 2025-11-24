@@ -10,7 +10,15 @@ from .scoring import ScoreEngine
 
 
 class DIQA:
-    def __init__(self, model_dir=None):
+    def __init__(self, model_dir=None, preload=True):
+        """
+        Initialize DIQA inference engine.
+
+        Args:
+            model_dir: Path to directory containing models. Defaults to package models directory.
+            preload: If True, preload all IQA models at initialization for faster inference.
+                    Default: True
+        """
         if model_dir is None:
             # Default to models directory inside the package
             model_dir = Path(__file__).parent / "models"
@@ -25,6 +33,10 @@ class DIQA:
             ScoreEngine()
         )  # Initialize score engine (handles its own caching)
 
+        # Preload all models to avoid lazy loading overhead during inference
+        if preload:
+            self._preload_all_models()
+
     def _load_models(self):
         if not self.router_path.exists():
             raise FileNotFoundError(f"Router model not found at {self.router_path}")
@@ -37,9 +49,20 @@ class DIQA:
 
         self.iqa_methods = ["brisque", "niqe", "piqe", "maniqa", "hyperiqa"]
 
+    def _preload_all_models(self):
+        """Preload all IQA models to avoid lazy loading overhead during inference."""
+        for method in self.iqa_methods:
+            self.score_engine._load_metric(method)
+
     def predict(self, image_path):
         """
         Predict the MOS and routing method for an image.
+
+        Args:
+            image_path: Path to the image file.
+
+        Returns:
+            Dictionary containing MOS estimate, selected method, confidence, and timing info.
         """
         start_time = time.time()
         image_path = Path(image_path)
