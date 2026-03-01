@@ -30,7 +30,6 @@ def extract_features(image_path: Union[str, Path]) -> List[float]:
             f"Could not load image at {image_path}. Please check the path and file integrity."
         )
 
-    image_bgr = cv2.resize(image_bgr, (512, 384))
     image_gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
     gray_float = image_gray.astype(float) / 255.0
     channel_r, channel_g, channel_b = cv2.split(

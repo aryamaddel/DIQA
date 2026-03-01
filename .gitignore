@@ -16,3 +16,6 @@ dist/
 build/
 test_models/
 dummy_mos.csv
+
+Data/LIVE In the Wild
+Data/koniq10k_512x384
