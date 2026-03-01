@@ -5,6 +5,11 @@ from xgboost import XGBClassifier
 from .features import extract_features
 
 
+def _apply_scaler(X, mean, scale):
+    X = np.asarray(X, dtype=float)
+    return (X - mean) / scale
+
+
 class DIQA:
     def __init__(
         self, model_dir: Optional[Union[str, Path]] = None, preload: bool = True
@@ -21,8 +26,25 @@ class DIQA:
         self.router.load_model(str(models_dir / "router_xgb.json"))
         self.mapping = json.load(open(models_dir / "mos_mapping_coefficients.json"))
 
-        with open(models_dir / "scaler.pkl", "rb") as f:
-            self.scaler = pickle.load(f)
+        scaler_json_path = models_dir / "scaler.json"
+        if scaler_json_path.exists():
+            scaler_payload = json.load(open(scaler_json_path))
+            self.scaler_mean = np.asarray(scaler_payload["mean"], dtype=float)
+            self.scaler_scale = np.asarray(scaler_payload["scale"], dtype=float)
+            self.scaler_scale[self.scaler_scale == 0] = 1.0
+        else:
+            # Backward compatibility for older model bundles.
+            try:
+                with open(models_dir / "scaler.pkl", "rb") as f:
+                    legacy_scaler = pickle.load(f)
+                    self.scaler_mean = np.asarray(legacy_scaler.mean_, dtype=float)
+                    self.scaler_scale = np.asarray(legacy_scaler.scale_, dtype=float)
+                    self.scaler_scale[self.scaler_scale == 0] = 1.0
+            except Exception as exc:
+                raise FileNotFoundError(
+                    f"Could not load scaler from {scaler_json_path} or scaler.pkl. "
+                    "Please retrain models with the current DIQA version."
+                ) from exc
 
         self.metrics = {}
         if preload:
@@ -43,7 +65,9 @@ class DIQA:
 
         # 1. Extract features of image
         raw_features = extract_features(image_path)
-        scaled_features = self.scaler.transform([raw_features])[0]
+        scaled_features = _apply_scaler(
+            [raw_features], self.scaler_mean, self.scaler_scale
+        )[0]
 
         # 2. Give to router model and decide which image metric to use
         probabilities = self.router.predict_proba([scaled_features])[0]
