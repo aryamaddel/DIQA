@@ -1,9 +1,18 @@
 [project]
 name = "diqa"
-version = "0.1.5"
+version = "0.1.6"
 description = "A production-ready No-Reference Image Quality Assessment (NR-IQA) library."
 readme = "README.md"
 requires-python = ">=3.9"
+authors = [
+    {name = "Arya Maddel", email = "aryamaddel@gmail.com"}
+]
+keywords = ["iqa", "image-quality", "no-reference", "machine-learning", "computer-vision"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
 dependencies = [
     "numpy",
     "pandas",
@@ -18,6 +27,9 @@ dependencies = [
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[project.urls]
+Homepage = "https://github.com/aryamaddel/DIQA"
 
 [tool.setuptools.packages.find]
 include = ["diqa*"]

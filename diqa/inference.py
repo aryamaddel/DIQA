@@ -1,93 +1,65 @@
-import os
-import json
-import time
-
-import numpy as np
+import time, json, numpy as np, pickle, pyiqa
 from pathlib import Path
+from typing import Dict, Union, Any, Optional
 from xgboost import XGBClassifier
 from .features import extract_features
-from .scoring import ScoreEngine
 
 
 class DIQA:
-    def __init__(self, model_dir=None, preload=True):
+    def __init__(
+        self, model_dir: Optional[Union[str, Path]] = None, preload: bool = True
+    ):
         """
-        Initialize DIQA inference engine.
+        Initializes the DIQA evaluation engine.
 
         Args:
-            model_dir: Path to directory containing models. Defaults to package models directory.
-            preload: If True, preload all IQA models at initialization for faster inference.
-                    Default: True
+            model_dir: Directory containing trained models (router, scaler, mapping coefficients).
+            preload: If True, preloads pyiqa metrics to memory.
         """
-        if model_dir is None:
-            # Default to models directory inside the package
-            model_dir = Path(__file__).parent / "models"
-        else:
-            model_dir = Path(model_dir)
-
-        self.router_path = model_dir / "router_xgb.json"
-        self.mapping_path = model_dir / "mos_mapping_coefficients.json"
-
-        self._load_models()
-        self.score_engine = (
-            ScoreEngine()
-        )  # Initialize score engine (handles its own caching)
-
-        # Preload all models to avoid lazy loading overhead during inference
-        if preload:
-            self._preload_all_models()
-
-    def _load_models(self):
-        if not self.router_path.exists():
-            raise FileNotFoundError(f"Router model not found at {self.router_path}")
-
+        models_dir = Path(model_dir or Path(__file__).parent / "models")
         self.router = XGBClassifier()
-        self.router.load_model(str(self.router_path))
+        self.router.load_model(str(models_dir / "router_xgb.json"))
+        self.mapping = json.load(open(models_dir / "mos_mapping_coefficients.json"))
 
-        with open(self.mapping_path, "r") as f:
-            self.mos_mapping = json.load(f)
+        with open(models_dir / "scaler.pkl", "rb") as f:
+            self.scaler = pickle.load(f)
 
-        self.iqa_methods = ["brisque", "niqe", "piqe", "maniqa", "hyperiqa"]
+        self.metrics = {}
+        if preload:
+            for method in self.mapping:
+                self.metrics[method] = pyiqa.create_metric(method, as_loss=False)
 
-    def _preload_all_models(self):
-        """Preload all IQA models to avoid lazy loading overhead during inference."""
-        for method in self.iqa_methods:
-            self.score_engine._load_metric(method)
-
-    def predict(self, image_path):
+    def predict(self, image_path: Union[str, Path]) -> Dict[str, Any]:
         """
-        Predict the MOS and routing method for an image.
+        Predicts the Mean Opinion Score (MOS) for a given image.
 
         Args:
-            image_path: Path to the image file.
+            image_path: The file path to the image to evaluate.
 
         Returns:
-            Dictionary containing MOS estimate, selected method, confidence, and timing info.
+            Dictionary containing MOS estimate, method used, confidence, and internal inference time.
         """
-        start_time = time.time()
-        image_path = Path(image_path)
+        start_time, image_path = time.time(), Path(image_path)
 
-        # Extract and scale features
-        features = extract_features(image_path).reshape(1, -1)
+        # 1. Extract features of image
+        raw_features = extract_features(image_path)
+        scaled_features = self.scaler.transform([raw_features])[0]
 
-        # Predict routing method
-        probabilities = self.router.predict_proba(features)[0]
-        top_method_idx = np.argmax(probabilities)
-        selected_method = self.iqa_methods[top_method_idx]
-        confidence = probabilities[top_method_idx]
+        # 2. Give to router model and decide which image metric to use
+        probabilities = self.router.predict_proba([scaled_features])[0]
+        selected_method = list(self.mapping)[np.argmax(probabilities)]
 
-        # Compute IQA score using the selected method
+        # 3. Run selected method to get raw score, and align to MOS scale
+        raw_score = self.metrics.setdefault(
+            selected_method, pyiqa.create_metric(selected_method, as_loss=False)
+        )(str(image_path)).item()
 
-        self.score_engine._load_metric(selected_method)
-        raw_score = self.score_engine.metrics[selected_method](str(image_path)).item()
-
-        # Map raw score to MOS
-        coef, intercept = self.mos_mapping[selected_method].values()
-        mos_estimate = coef * raw_score + intercept
+        mapping_coeffs = self.mapping[selected_method]
+        final_mos = mapping_coeffs["coef"] * raw_score + mapping_coeffs["intercept"]
 
         return {
-            "MOS_estimate": mos_estimate,
-            "selected_method": selected_method,
-            "confidence": confidence,
-            "timing": {"total_time_ms": (time.time() - start_time) * 1000},
+            "MOS": float(final_mos),
+            "method": selected_method,
+            "confidence": float(max(probabilities)),
+            "time_ms": (time.time() - start_time) * 1000,
         }
