@@ -17,7 +17,6 @@ dependencies = [
     "numpy",
     "pandas",
     "opencv-python",
-    "scikit-learn",
     "xgboost",
     "pyiqa",
     "tqdm",

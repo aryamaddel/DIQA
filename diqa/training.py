@@ -1,9 +1,6 @@
-import json, pandas as pd, numpy as np, pickle, pyiqa
+import json, pandas as pd, numpy as np, pyiqa
 from pathlib import Path
 from typing import Union, Dict, Any
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 from tqdm import tqdm
 from .features import build_features, FEATURE_NAMES
@@ -21,6 +18,67 @@ def get_scores(image_paths, methods=("brisque", "niqe", "piqe", "maniqa", "hyper
             for p in tqdm(paths, "Scoring")
         ]
     )
+
+
+def _fit_scaler(X: np.ndarray):
+    X = np.asarray(X, dtype=float)
+    mean = X.mean(axis=0)
+    scale = X.std(axis=0)
+    scale[scale == 0] = 1.0
+    return mean, scale
+
+
+def _apply_scaler(X: np.ndarray, mean: np.ndarray, scale: np.ndarray) -> np.ndarray:
+    X = np.asarray(X, dtype=float)
+    return (X - mean) / scale
+
+
+def _fit_simple_linear_regression(x: np.ndarray, y: np.ndarray):
+    x = np.asarray(x, dtype=float).reshape(-1)
+    y = np.asarray(y, dtype=float).reshape(-1)
+    x_mean = x.mean()
+    y_mean = y.mean()
+    var_x = np.mean((x - x_mean) ** 2)
+    if var_x == 0:
+        return 0.0, float(y_mean)
+    cov_xy = np.mean((x - x_mean) * (y - y_mean))
+    coef = cov_xy / var_x
+    intercept = y_mean - coef * x_mean
+    return float(coef), float(intercept)
+
+
+def _train_test_split_stratified(
+    X: np.ndarray, y: np.ndarray, test_size: float, seed: int
+):
+    if not 0 < test_size < 1:
+        raise ValueError("test_size must be between 0 and 1.")
+
+    rng = np.random.default_rng(seed)
+    y = np.asarray(y)
+    train_indices, test_indices = [], []
+
+    for class_id in np.unique(y):
+        class_indices = np.where(y == class_id)[0]
+        if len(class_indices) < 2:
+            raise ValueError(
+                "Each class needs at least 2 samples for stratified train/test split."
+            )
+
+        shuffled = class_indices.copy()
+        rng.shuffle(shuffled)
+
+        test_count = max(1, int(np.floor(len(shuffled) * test_size)))
+        test_count = min(test_count, len(shuffled) - 1)
+
+        test_indices.extend(shuffled[:test_count])
+        train_indices.extend(shuffled[test_count:])
+
+    train_indices = np.array(train_indices)
+    test_indices = np.array(test_indices)
+    rng.shuffle(train_indices)
+    rng.shuffle(test_indices)
+
+    return X[train_indices], X[test_indices], y[train_indices], y[test_indices]
 
 
 class DIQATrainer:
@@ -77,13 +135,15 @@ class DIQATrainer:
         # 1. Compute IQA values & align them to human given MOS scores
         # We need this because IQA metrics output random scales (e.g. 0-100 or 0-1)
         for method in self.iqa_methods:
-            regression_model = LinearRegression().fit(self.df[[method]], self.df["MOS"])
+            coef, intercept = _fit_simple_linear_regression(
+                self.df[method].to_numpy(), self.df["MOS"].to_numpy()
+            )
             coefficients[method] = {
-                "coef": float(regression_model.coef_[0]),
-                "intercept": float(regression_model.intercept_),
+                "coef": coef,
+                "intercept": intercept,
             }
             # Calculate how far off this method is from the human MOS
-            aligned_scores = regression_model.predict(self.df[[method]])
+            aligned_scores = coef * self.df[method].to_numpy() + intercept
             errors_to_mos[method] = np.abs(aligned_scores - self.df["MOS"])
 
         json.dump(
@@ -103,20 +163,23 @@ class DIQATrainer:
 
         X_features = self.df[FEATURE_NAMES].values
 
-        X_train, X_test, y_train, y_test = train_test_split(
+        X_train, X_test, y_train, y_test = _train_test_split_stratified(
             X_features,
             y_labels.values,
             test_size=test_size,
-            random_state=seed,
-            stratify=y_labels.values,
+            seed=seed,
         )
 
-        scaler = StandardScaler()
-        X_train = scaler.fit_transform(X_train)
-        X_test = scaler.transform(X_test)
+        scaler_mean, scaler_scale = _fit_scaler(X_train)
+        X_train = _apply_scaler(X_train, scaler_mean, scaler_scale)
+        X_test = _apply_scaler(X_test, scaler_mean, scaler_scale)
 
-        with open(self.output_dir / "scaler.pkl", "wb") as f:
-            pickle.dump(scaler, f)
+        with open(self.output_dir / "scaler.json", "w", encoding="utf-8") as f:
+            json.dump(
+                {"mean": scaler_mean.tolist(), "scale": scaler_scale.tolist()},
+                f,
+                indent=2,
+            )
 
         # 3. Train router model to learn which type of images to pass to which model
         router = XGBClassifier(n_estimators=100, random_state=seed).fit(
