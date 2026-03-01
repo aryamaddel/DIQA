@@ -36,3 +36,8 @@ include = ["diqa*"]
 
 [tool.setuptools.package-data]
 diqa = ["models/*"]
+
+[dependency-groups]
+dev = [
+    "pytest",
+]
